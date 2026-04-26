@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
 app.use(cors());
 
-// ✅ Safe MongoDB connection (works in local + CI + prod)
+// ✅ Mongo connection (works for local + CI + prod)
 const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/test";
 
 const options = {
@@ -32,9 +32,8 @@ mongoose.connect(mongoURI, options, function(err) {
     }
 });
 
-var Schema = mongoose.Schema;
-
-var dataSchema = new Schema({
+// Schema
+const dataSchema = new mongoose.Schema({
     name: String,
     id: Number,
     description: String,
@@ -43,9 +42,9 @@ var dataSchema = new Schema({
     distance: String
 });
 
-var planetModel = mongoose.model('planets', dataSchema);
+const planetModel = mongoose.model('planets', dataSchema);
 
-// ✅ Fixed API (removed alert)
+// API
 app.post('/planet', function(req, res) {
     planetModel.findOne({ id: req.body.id }, function(err, planetData) {
         if (err) {
@@ -61,8 +60,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/os', function(req, res) {
-    res.setHeader('Content-Type', 'application/json');
-    res.send({
+    res.json({
         os: OS.hostname(),
         env: process.env.NODE_ENV
     });
@@ -76,8 +74,11 @@ app.get('/ready', function(req, res) {
     res.json({ status: "ready" });
 });
 
-app.listen(3000, () => {
-    console.log("Server successfully running on port - 3000");
-});
+// ✅ Prevent server start during tests
+if (require.main === module) {
+    app.listen(3000, () => {
+        console.log("Server successfully running on port - 3000");
+    });
+}
 
 module.exports = app;

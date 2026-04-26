@@ -3,188 +3,102 @@ let server = require("./app");
 let chai = require("chai");
 let chaiHttp = require("chai-http");
 
-
-// Assertion 
 chai.should();
-chai.use(chaiHttp); 
+chai.use(chaiHttp);
+
+// Schema (same as app)
+const planetSchema = new mongoose.Schema({
+    name: String,
+    id: Number,
+    description: String,
+    image: String,
+    velocity: String,
+    distance: String
+});
+
+const Planet = mongoose.model('planets', planetSchema);
+
+// ✅ Seed DB before tests
+before(async () => {
+    await mongoose.connect(process.env.MONGO_URI);
+
+    await Planet.deleteMany({});
+
+    await Planet.insertMany([
+        { id: 1, name: "Mercury" },
+        { id: 2, name: "Venus" },
+        { id: 3, name: "Earth" },
+        { id: 4, name: "Mars" },
+        { id: 5, name: "Jupiter" },
+        { id: 6, name: "Saturn" },
+        { id: 7, name: "Uranus" },
+        { id: 8, name: "Neptune" }
+    ]);
+});
+
+// ✅ Cleanup after tests
+after(async () => {
+    await mongoose.connection.close();
+});
 
 describe('Planets API Suite', () => {
 
-    describe('Fetching Planet Details', () => {
-        it('it should fetch a planet named Mercury', (done) => {
-            let payload = {
-                id: 1
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
+    const planets = [
+        { id: 1, name: "Mercury" },
+        { id: 2, name: "Venus" },
+        { id: 3, name: "Earth" },
+        { id: 4, name: "Mars" },
+        { id: 5, name: "Jupiter" },
+        { id: 6, name: "Saturn" },
+        { id: 7, name: "Uranus" },
+        { id: 8, name: "Neptune" }
+    ];
+
+    planets.forEach(p => {
+        it(`should fetch planet ${p.name}`, (done) => {
+            chai.request(server)
+                .post('/planet')
+                .send({ id: p.id })
+                .end((err, res) => {
                     res.should.have.status(200);
-                    res.body.should.have.property('id').eql(1);
-                    res.body.should.have.property('name').eql('Mercury');
-                done();
-              });
+                    res.body.should.have.property('id').eql(p.id);
+                    res.body.should.have.property('name').eql(p.name);
+                    done();
+                });
         });
-
-        it('it should fetch a planet named Venus', (done) => {
-            let payload = {
-                id: 2
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(2);
-                    res.body.should.have.property('name').eql('Venus');
-                done();
-              });
-        });
-
-        it('it should fetch a planet named Earth', (done) => {
-            let payload = {
-                id: 3
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(3);
-                    res.body.should.have.property('name').eql('Earth');
-                done();
-              });
-        });
-        it('it should fetch a planet named Mars', (done) => {
-            let payload = {
-                id: 4
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(4);
-                    res.body.should.have.property('name').eql('Mars');
-                done();
-              });
-        });
-
-        it('it should fetch a planet named Jupiter', (done) => {
-            let payload = {
-                id: 5
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(5);
-                    res.body.should.have.property('name').eql('Jupiter');
-                done();
-              });
-        });
-
-        it('it should fetch a planet named Satrun', (done) => {
-            let payload = {
-                id: 6
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(6);
-                    res.body.should.have.property('name').eql('Saturn');
-                done();
-              });
-        });
-
-        it('it should fetch a planet named Uranus', (done) => {
-            let payload = {
-                id: 7
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(7);
-                    res.body.should.have.property('name').eql('Uranus');
-                done();
-              });
-        });
-
-        it('it should fetch a planet named Neptune', (done) => {
-            let payload = {
-                id: 8
-            }
-          chai.request(server)
-              .post('/planet')
-              .send(payload)
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('id').eql(8);
-                    res.body.should.have.property('name').eql('Neptune');
-                done();
-              });
-        });
-
-        // it('it should fetch a planet named Pluto', (done) => {
-        //     let payload = {
-        //         id: 9
-        //     }
-        //   chai.request(server)
-        //       .post('/planet')
-        //       .send(payload)
-        //       .end((err, res) => {
-        //             res.should.have.status(200);
-        //             res.body.should.have.property('id').eql(9);
-        //             res.body.should.have.property('name').eql('Sun');
-        //         done();
-        //       });
-        // });
-
-
-    });        
+    });
 });
 
-//Use below test case to achieve coverage
+// Other endpoints
 describe('Testing Other Endpoints', () => {
 
-    describe('it should fetch OS Details', () => {
-        it('it should fetch OS details', (done) => {
-          chai.request(server)
-              .get('/os')
-              .end((err, res) => {
-                    res.should.have.status(200);
+    it('should fetch OS details', (done) => {
+        chai.request(server)
+            .get('/os')
+            .end((err, res) => {
+                res.should.have.status(200);
                 done();
-              });
-        });
+            });
     });
 
-    describe('it should fetch Live Status', () => {
-        it('it checks Liveness endpoint', (done) => {
-          chai.request(server)
-              .get('/live')
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('status').eql('live');
+    it('should check liveness', (done) => {
+        chai.request(server)
+            .get('/live')
+            .end((err, res) => {
+                res.should.have.status(200);
+                res.body.should.have.property('status').eql('live');
                 done();
-              });
-        });
+            });
     });
 
-    describe('it should fetch Ready Status', () => {
-        it('it checks Readiness endpoint', (done) => {
-          chai.request(server)
-              .get('/ready')
-              .end((err, res) => {
-                    res.should.have.status(200);
-                    res.body.should.have.property('status').eql('ready');
+    it('should check readiness', (done) => {
+        chai.request(server)
+            .get('/ready')
+            .end((err, res) => {
+                res.should.have.status(200);
+                res.body.should.have.property('status').eql('ready');
                 done();
-              });
-        });
+            });
     });
 
 });
