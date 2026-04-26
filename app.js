@@ -1,107 +1,87 @@
 const path = require('path');
-require('dotenv').config();
-
 const express = require('express');
 const OS = require('os');
 const bodyParser = require('body-parser');
 const mongoose = require("mongoose");
-const cors = require('cors');
-
 const app = express();
+const cors = require('cors')
+
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
-app.use(cors());
+app.use(cors())
 
-// ✅ Use mock data in test mode
-let planetModel;
-
-if (process.env.NODE_ENV !== "test") {
-    mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("✅ MongoDB Connected");
-    })
-    .catch(err => {
-        console.error("❌ MongoDB Connection Error:", err);
-    });
-
-    const Schema = mongoose.Schema;
-
-    const dataSchema = new Schema({
-        name: String,
-        id: Number,
-        description: String,
-        image: String,
-        velocity: String,
-        distance: String
-    });
-
-    planetModel = mongoose.model('planets', dataSchema);
-}
-
-// ✅ Hardcoded fallback for tests
-const testPlanets = [
-    { id: 1, name: "Mercury" },
-    { id: 2, name: "Venus" },
-    { id: 3, name: "Earth" },
-    { id: 4, name: "Mars" },
-    { id: 5, name: "Jupiter" },
-    { id: 6, name: "Saturn" },
-    { id: 7, name: "Uranus" },
-    { id: 8, name: "Neptune" }
-];
-
-// ✅ API
-app.post('/planet', async (req, res) => {
-    try {
-        let planetData;
-
-        if (process.env.NODE_ENV === "test") {
-            planetData = testPlanets.find(p => p.id === req.body.id);
-        } else {
-            planetData = await planetModel.findOne({ id: req.body.id });
-        }
-
-        if (!planetData) {
-            return res.status(404).json({ message: "Planet not found" });
-        }
-
-        // ✅ Only return required fields
-        res.json({
-            id: planetData.id,
-            name: planetData.name
-        });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Error in Planet Data" });
+mongoose.connect(process.env.MONGO_URI, {
+    user: process.env.MONGO_USERNAME,
+    pass: process.env.MONGO_PASSWORD,
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}, function(err) {
+    if (err) {
+        console.log("error!! " + err)
+    } else {
+      //  console.log("MongoDB Connection Successful")
     }
+})
+
+var Schema = mongoose.Schema;
+
+var dataSchema = new Schema({
+    name: String,
+    id: Number,
+    description: String,
+    image: String,
+    velocity: String,
+    distance: String
+});
+var planetModel = mongoose.model('planets', dataSchema);
+
+
+
+app.post('/planet',   function(req, res) {
+   // console.log("Received Planet ID " + req.body.id)
+    planetModel.findOne({
+        id: req.body.id
+    }, function(err, planetData) {
+        if (err) {
+            alert("Ooops, We only have 9 planets and a sun. Select a number from 0 - 9")
+            res.send("Error in Planet Data")
+        } else {
+            res.send(planetData);
+        }
+    })
+})
+
+app.get('/',   async (req, res) => {
+    res.sendFile(path.join(__dirname, '/', 'index.html'));
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
 
-app.get('/os', (req, res) => {
-    res.status(200).json({
-        os: OS.hostname(),
-        env: process.env.NODE_ENV
+app.get('/os',   function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    res.send({
+        "os": OS.hostname(),
+        "env": process.env.NODE_ENV
     });
-});
+})
 
-app.get('/live', (req, res) => {
-    res.status(200).json({ status: "live" });
-});
-
-app.get('/ready', (req, res) => {
-    res.status(200).json({ status: "ready" });
-});
-
-// ❗ DO NOT start server in test
-if (process.env.NODE_ENV !== "test") {
-    app.listen(3000, () => {
-        console.log("Server successfully running on port - 3000");
+app.get('/live',   function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    res.send({
+        "status": "live"
     });
-}
+})
+
+app.get('/ready',   function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    res.send({
+        "status": "ready"
+    });
+})
+
+app.listen(3000, () => {
+    console.log("Server successfully running on port - " +3000);
+})
+
 
 module.exports = app;
