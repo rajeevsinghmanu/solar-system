@@ -8,14 +8,24 @@ on:
       - 'feature/*'
 
 env:
-  MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-  MONGO_USERNAME: ${{vars.MONGO_USERNAME}},
-  MONGO_PASSWORD: ${{secrets.MONGO_PASSWORD}},
+  # ✅ Use local MongoDB for CI
+  MONGO_URI: mongodb://localhost:27017/test
 
 jobs:
   unit-testing:
     name: unit-testing
     runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout repository
@@ -39,4 +49,4 @@ jobs:
           echo "MongoDB failed to start" && exit 1
 
       - name: Run unit tests
-        run: npm test                      
+        run: npm test
