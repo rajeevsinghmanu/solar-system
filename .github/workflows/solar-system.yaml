@@ -45,6 +45,4 @@ jobs:
           echo "MongoDB failed to start" && exit 1
 
       - name: Run unit tests
-        env:
-          MONGO_URI: mongodb://127.0.0.1:27017/testdb
         run: npm test                      
