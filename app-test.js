@@ -6,17 +6,8 @@ let chaiHttp = require("chai-http");
 chai.should();
 chai.use(chaiHttp);
 
-// Schema (same as app)
-const planetSchema = new mongoose.Schema({
-    name: String,
-    id: Number,
-    description: String,
-    image: String,
-    velocity: String,
-    distance: String
-});
-
-const Planet = mongoose.model('planets', planetSchema);
+// ✅ Use existing model instead of redefining
+const Planet = mongoose.models.planets;
 
 // ✅ Seed DB before tests
 before(async () => {
@@ -36,7 +27,7 @@ before(async () => {
     ]);
 });
 
-// ✅ Cleanup after tests
+// ✅ Cleanup
 after(async () => {
     await mongoose.connection.close();
 });
